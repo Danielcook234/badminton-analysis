@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 1
+names: ['shuttle']
+
+roboflow:
+  workspace: badminton-eu9bt
+  project: badminton-6a4rb
+  version: 2
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/badminton-eu9bt/badminton-6a4rb/dataset/2

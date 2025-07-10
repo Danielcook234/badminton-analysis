@@ -1,0 +1,17 @@
+# Ignore virtual environments
+venv/
+mediapipe-env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# VSCode settings (optional)
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
