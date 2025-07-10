@@ -1,0 +1,5 @@
+This project makes it so that you can have a badminton rally and it will track the shuttle and tell you how optimal each shot was. This was made possible using YOLO for generating a model based on data.
+The data was obtained from the all england 2025 womans singles semi finals between An Se Young and Akane Yamaguchi and the current replay from the repository is also from that match. The model was not trained
+on the rally that is called rally1.mp4. Roboflow was utilised to mark on each piece of data where the shuttle was so that the model was able to learn. 
+
+Current version - Tracks the shuttle and will draw a trajectory from the last 30 recordings of the position of the shuttle. The video does look quite slow because of all the computations but I'm unsure how to improve that. Still need to figure out how to analyse which shot was each players and how to score that shot. Ideas: since the trajectory of the shuttle should be a curve when hit, we can see when that curve is interrupted and therefore the other player has hit it
