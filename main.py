@@ -21,6 +21,11 @@ def detect_player_hit(trajectory, speed_threshold = 20, angle_change_threshold =
     speed1 = np.linalg.norm(v1)
     speed2 = np.linalg.norm(v2)
 
+    with open("detection.txt", "a") as f:
+        f.write(f"last 3 points: {(x1,y1)}, {(x2,y2)}, {(x3,y3)}\n")
+        f.write(f"v1: {v1}, v2: {v2}\n")
+        f.write(f"speed1: {speed1}, speed2: {speed2}\n")
+
     #angle between movement vectors
     if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
         return False, None
@@ -73,6 +78,10 @@ if __name__ == "__main__":
             cv2.line(frame,trajectory[i-1],trajectory[i], (255,0,0),2)
 
         player_hit, hitter = detect_player_hit(trajectory)
+
+        with open("detection.txt", "a") as f:
+            f.write(f"hit_detected: {player_hit}\n")
+            f.write(f"hitter: {hitter}\n\n")
 
         if player_hit:
             cv2.putText(frame, f"{hitter} Hit!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
