@@ -5,42 +5,30 @@ import numpy as np
 
 last_curve_sign = [None]
 
-def detect_player_hit(trajectory, speed_threshold = 20, angle_change_threshold = 120):
-    #not enough points
-    if len(trajectory) < 3:
+def detect_player_hit(trajectory, tolerance = 25, fit_points = 6):
+    if len(trajectory) < fit_points + 1:
         return False, None
     
-    #get last 3 points
-    (x1,y1),(x2,y2),(x3,y3) = trajectory[-3], trajectory[-2],trajectory[-1]
+    recent = list(trajectory)[-fit_points-1:-1]
+    new_point = trajectory[-1]
 
-    #compute velocity vectors
-    v1 = np.array([x2-x1,y2-y1])
-    v2 = np.array([x3-x2,y3-y2])
+    xs = [p[0] for p in recent]
+    ys = [p[1] for p in recent]
 
-    #speeds
-    speed1 = np.linalg.norm(v1)
-    speed2 = np.linalg.norm(v2)
+    try:
+        coeffs = np.polyfit(xs,ys,2)
+        a,b,c = coeffs
+        predicted_y = a * new_point[0]**2 + b * new_point[0] + c
+        actual_y = new_point[1]
+        error = abs(predicted_y - actual_y)
 
-    with open("detection.txt", "a") as f:
-        f.write(f"last 3 points: {(x1,y1)}, {(x2,y2)}, {(x3,y3)}\n")
-        f.write(f"v1: {v1}, v2: {v2}\n")
-        f.write(f"speed1: {speed1}, speed2: {speed2}\n")
+        if error > tolerance:
+            return True, coeffs
+        else:
+            return False, coeffs
 
-    #angle between movement vectors
-    if np.linalg.norm(v1) == 0 or np.linalg.norm(v2) == 0:
+    except np.RankWarning:
         return False, None
-    
-    cosine_angle = np.dot(v1,v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
-    angle = np.degrees(np.arccos(np.clip(cosine_angle,-1.0,1.0)))
-
-    #detect a hit
-    hit_detected = abs(speed2-speed1) > speed_threshold or angle > angle_change_threshold
-    if not hit_detected:
-        return False, None
-    
-    hitter = "bottom player" if v1[1] < 0 else "top player"
-
-    return True, hitter
 
 if __name__ == "__main__":
 
@@ -54,7 +42,7 @@ if __name__ == "__main__":
 
     cv2.namedWindow("Shuttlecock Detection", cv2.WINDOW_NORMAL)
 
-    trajectory = deque(maxlen=30)
+    trajectory = deque(maxlen=15)
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -77,15 +65,18 @@ if __name__ == "__main__":
         for i in range(1,len(trajectory)):
             cv2.line(frame,trajectory[i-1],trajectory[i], (255,0,0),2)
 
-        player_hit, hitter = detect_player_hit(trajectory)
-
-        with open("detection.txt", "a") as f:
-            f.write(f"hit_detected: {player_hit}\n")
-            f.write(f"hitter: {hitter}\n\n")
+        player_hit, curve = detect_player_hit(trajectory)
 
         if player_hit:
-            cv2.putText(frame, f"{hitter} Hit!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
+            cv2.putText(frame, "Shuttle Hit!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
                 1.2, (0, 0, 255), 3)
+
+            # Optionally log or visualize
+            with open("detection.txt", "a") as f:
+                f.write(f"HIT DETECTED due to trend break. Coeffs: {curve}\n")
+
+            # Reset trajectory to start new trend
+            trajectory = deque([trajectory[-1]], maxlen=15)
 
         cv2.imshow("Shuttlecock Detection", frame)
         if cv2.waitKey(20) & 0xFF == ord('q'):
