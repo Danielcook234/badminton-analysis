@@ -3,8 +3,6 @@ from ultralytics import YOLO
 from collections import deque
 import numpy as np
 
-last_curve_sign = [None]
-
 def detect_player_hit(trajectory, tolerance = 25, fit_points = 6):
     if len(trajectory) < fit_points + 1:
         return False, None
@@ -43,6 +41,7 @@ if __name__ == "__main__":
     cv2.namedWindow("Shuttlecock Detection", cv2.WINDOW_NORMAL)
 
     trajectory = deque(maxlen=15)
+    shown_trajectory = deque(maxlen=30)
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -58,12 +57,13 @@ if __name__ == "__main__":
                 cy = int ((y1 + y2) / 2)
                 if float(box.conf[0]) > 0.5:
                     trajectory.append((cx,cy))
+                    shown_trajectory.append((cx,cy))
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
                 cv2.putText(frame, 'shuttlecock', (x1, y1-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
                 
-        for i in range(1,len(trajectory)):
-            cv2.line(frame,trajectory[i-1],trajectory[i], (255,0,0),2)
+        for i in range(1,len(shown_trajectory)):
+            cv2.line(frame,shown_trajectory[i-1],shown_trajectory[i], (255,0,0),2)
 
         player_hit, curve = detect_player_hit(trajectory)
 
