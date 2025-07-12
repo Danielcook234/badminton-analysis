@@ -4,18 +4,22 @@ from collections import deque
 import numpy as np
 
 def detect_player_hit(trajectory, tolerance = 25, fit_points = 6):
+    # Not enough data points
     if len(trajectory) < fit_points + 1:
         return False, None
     
     recent = list(trajectory)[-fit_points-1:-1]
     new_point = trajectory[-1]
 
+    # Get x and y of recent coordinates
     xs = [p[0] for p in recent]
     ys = [p[1] for p in recent]
 
     try:
+        # Fit quadratic graph to points
         coeffs = np.polyfit(xs,ys,2)
         a,b,c = coeffs
+        # Predict next position and compare to actual position
         predicted_y = a * new_point[0]**2 + b * new_point[0] + c
         actual_y = new_point[1]
         error = abs(predicted_y - actual_y)
@@ -50,6 +54,7 @@ if __name__ == "__main__":
 
         results = model.predict(source=frame, verbose=False)
         
+        # Find shuttle in frame
         for r in results:
             for box in r.boxes:
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
@@ -61,7 +66,8 @@ if __name__ == "__main__":
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
                 cv2.putText(frame, 'shuttlecock', (x1, y1-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
-                
+
+        # Draw trajectory       
         for i in range(1,len(shown_trajectory)):
             cv2.line(frame,shown_trajectory[i-1],shown_trajectory[i], (255,0,0),2)
 
@@ -71,7 +77,7 @@ if __name__ == "__main__":
             cv2.putText(frame, "Shuttle Hit!", (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
                 1.2, (0, 0, 255), 3)
 
-            # Optionally log or visualize
+            # Log
             with open("detection.txt", "a") as f:
                 f.write(f"HIT DETECTED due to trend break. Coeffs: {curve}\n")
 
