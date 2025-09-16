@@ -1,13 +1,13 @@
-train: ../train/images
-val: ../valid/images
-test: ../test/images
+train: ./train/images
+val: ./valid/images
+test: ./test/images
 
-nc: 1
-names: ['shuttle']
+nc: 3
+names: ['Player 1', 'Player 2', 'shuttle']
 
 roboflow:
   workspace: badminton-eu9bt
   project: badminton-6a4rb
-  version: 2
+  version: 4
   license: CC BY 4.0
-  url: https://universe.roboflow.com/badminton-eu9bt/badminton-6a4rb/dataset/2
+  url: https://universe.roboflow.com/badminton-eu9bt/badminton-6a4rb/dataset/4

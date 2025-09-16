@@ -34,7 +34,9 @@ def detect_player_hit(trajectory, tolerance = 25, fit_points = 6):
 
 if __name__ == "__main__":
 
-    model = YOLO('runs/detect/shuttlecock_yolov8n2/weights/best.pt')
+    class_names = ['Player 1', 'Player 2', 'shuttle']
+
+    model = YOLO('runs/detect/shuttlecock_yolov8n4/weights/best.pt')
 
     cap = cv2.VideoCapture("rally1.mp4")
 
@@ -60,12 +62,19 @@ if __name__ == "__main__":
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
                 cx = int((x1+x2) / 2)
                 cy = int ((y1 + y2) / 2)
-                if float(box.conf[0]) > 0.5:
-                    trajectory.append((cx,cy))
-                    shown_trajectory.append((cx,cy))
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,255,0), 2)
-                cv2.putText(frame, 'shuttlecock', (x1, y1-10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
+
+                cls_id = int(box.cls[0])
+                label = class_names[cls_id]
+
+                if label == 'shuttle':
+                    if float(box.conf[0]) > 0.5:
+                        trajectory.append((cx,cy))
+                        shown_trajectory.append((cx,cy))
+
+                colour = (0,255,0) if label == 'shuttle' else (255,0,0)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), colour, 2)
+                cv2.putText(frame, label, (x1, y1-10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, colour, 2)
 
         # Draw trajectory       
         for i in range(1,len(shown_trajectory)):

@@ -1,8 +1,8 @@
 
-badminton - v2 2025-07-10 5:04pm
+badminton - v4 2025-09-16 12:50pm
 ==============================
 
-This dataset was exported via roboflow.com on July 10, 2025 at 4:04 PM GMT
+This dataset was exported via roboflow.com on September 16, 2025 at 11:51 AM GMT
 
 Roboflow is an end-to-end computer vision platform that helps you
 * collaborate with your team on computer vision projects

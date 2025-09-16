@@ -4,7 +4,7 @@ if __name__ == "__main__":
     model = YOLO('yolov8n.pt')
 
     results = model.train(
-        data = 'shuttlecock_data.yaml',
+        data = 'shuttlecock_dataset/data.yaml',
         epochs = 50,
         imgsz = 640,
         batch = 16,
