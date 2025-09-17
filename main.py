@@ -31,10 +31,21 @@ def detect_player_hit(trajectory, tolerance = 25, fit_points = 6):
 
     except np.RankWarning:
         return False, None
+    
+def click_event(event, x, y, flags, params):
+    if event == cv2.EVENT_LBUTTONDOWN:
+        print(x,y)
 
 if __name__ == "__main__":
 
     class_names = ['Player 1', 'Player 2', 'shuttle']
+
+    pts_src = np.array([[416,1012],[1506,1012],[606,582],[1311,582]],dtype=np.float32)
+
+    width, height = 1340, 610
+    pts_dst = np.array([[width,0],[0,0],[0,height],[width,height]],dtype=np.float32)
+
+    H = cv2.getPerspectiveTransform(pts_src,pts_dst)
 
     model = YOLO('runs/detect/shuttlecock_yolov8n4/weights/best.pt')
 
@@ -54,7 +65,10 @@ if __name__ == "__main__":
         if not ret:
             break
 
+        warped_frame = cv2.warpPerspective(frame,H, (width,height))
+
         results = model.predict(source=frame, verbose=False)
+        cv2.setMouseCallback('Shuttlecock Detection', click_event)
         
         # Find shuttle in frame
         for r in results:
@@ -94,6 +108,7 @@ if __name__ == "__main__":
             trajectory = deque([trajectory[-1]], maxlen=15)
 
         cv2.imshow("Shuttlecock Detection", frame)
+        cv2.imshow("Warped perspective", warped_frame)
         if cv2.waitKey(20) & 0xFF == ord('q'):
             break
 
