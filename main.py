@@ -40,10 +40,11 @@ if __name__ == "__main__":
 
     class_names = ['Player 1', 'Player 2', 'shuttle']
 
-    pts_src = np.array([[416,1012],[1506,1012],[606,582],[1311,582]],dtype=np.float32)
+    pts_src = np.array([[416,1012],[1506,1012],[1311,582],[606,582]],dtype=np.float32)
 
-    width, height = 1340, 610
-    pts_dst = np.array([[width,0],[0,0],[0,height],[width,height]],dtype=np.float32)
+    width, height = 1910, 1068
+    c_width, c_height = 1340, 610
+    pts_dst = np.array([[0,c_height],[c_width,c_height],[c_width,0],[0,0]],dtype=np.float32)
 
     H = cv2.getPerspectiveTransform(pts_src,pts_dst)
 
@@ -65,7 +66,7 @@ if __name__ == "__main__":
         if not ret:
             break
 
-        warped_frame = cv2.warpPerspective(frame,H, (width,height))
+        warped_frame = cv2.warpPerspective(frame,H, (c_width,c_height))
 
         results = model.predict(source=frame, verbose=False)
         cv2.setMouseCallback('Shuttlecock Detection', click_event)
