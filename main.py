@@ -43,7 +43,7 @@ if __name__ == "__main__":
     pts_src = np.array([[416,1012],[1506,1012],[1311,582],[606,582]],dtype=np.float32)
 
     width, height = 1910, 1068
-    c_width, c_height = 1340, 610
+    c_width, c_height = 1340, 900
     pts_dst = np.array([[0,c_height],[c_width,c_height],[c_width,0],[0,0]],dtype=np.float32)
 
     H = cv2.getPerspectiveTransform(pts_src,pts_dst)
@@ -80,6 +80,13 @@ if __name__ == "__main__":
 
                 cls_id = int(box.cls[0])
                 label = class_names[cls_id]
+
+                point = np.array([[[cx,y2]]],dtype=np.float32)
+
+                warped_c = cv2.perspectiveTransform(point,H)
+                wx,wy = warped_c[0][0]
+
+                cv2.circle(warped_frame,(int(wx),int(wy)),5,(0,0,255),-1)
 
                 if label == 'shuttle':
                     if float(box.conf[0]) > 0.5:
