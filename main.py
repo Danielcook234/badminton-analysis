@@ -34,10 +34,20 @@ if __name__ == "__main__":
         [606, 582]    # top-left
     ], dtype=np.float32)
 
+    image_points_extra = np.array([
+        [961, 1012], # middle bottom
+        [1386, 745], # middle right
+        [961, 582], # middle top
+        [416, 745], # middle left
+        [961, 745] #centre
+    ], dtype=np.float32)
+
+    image_points = np.vstack([image_points, image_points_extra])
+
     # Court corners in top-down view (warped)
     c_width, c_height = 1340, 900
     pts_dst = np.array([[0, c_height], [c_width, c_height], [c_width, 0], [0, 0]], dtype=np.float32)
-    H = cv2.getPerspectiveTransform(image_points, pts_dst)
+    H = cv2.getPerspectiveTransform(image_points[:4], pts_dst)
 
     # Camera intrinsics (approximate)
     focal_length = 1500
@@ -47,7 +57,7 @@ if __name__ == "__main__":
         [0, focal_length, centre[1]],
         [0, 0, 1]
     ], dtype=np.float32)
-    dist_coeffs = np.zeros((4,1))
+    dist_coeffs = np.zeros((4,1), np.float32)
 
     # SolvePnP once to get camera pose
     object_points = np.array([
@@ -56,6 +66,17 @@ if __name__ == "__main__":
         [6.1, 13.4, 0.0],
         [0.0, 13.4, 0.0]
     ], dtype=np.float32)
+
+    extra_world_points = np.array([
+        [3.05, 0.0, 0.0], # middle bottom line
+        [6.1, 6.7, 0.0], # middle right sideline
+        [3.05, 13.4, 0.0], # middle top line
+        [0.0, 6.7, 0.0], # middle left sideline
+        [3.05, 6.7, 0.0] # centre of court
+    ], dtype=np.float32)
+
+    object_points = np.vstack([object_points, extra_world_points])
+
     success, rvec, tvec = cv2.solvePnP(object_points, image_points, camera_matrix, dist_coeffs)
 
     # Load YOLO and video
@@ -86,28 +107,30 @@ if __name__ == "__main__":
 
                 # Bottom-center of bbox
                 cx = int((x1 + x2)/2)
-                cy = int(y2)
+                cy = int((y1 + y2) / 2)
 
                 if label == 'shuttle' and float(box.conf[0]) > 0.5:
-                    # 3D back-projection to court
-                    wx_world, wy_world, wz_world = project_to_court(cx, cy, camera_matrix, rvec, tvec)
+                    # If shuttle near ground
+                    if y2 > frame.shape[0] * 0.7:  # bottom 30% of frame
+                        wx_world, wy_world, _ = project_to_court(cx, cy, camera_matrix, rvec, tvec)
+                        wx_world = np.clip(wx_world, 0, 6.1)
+                        wy_world = np.clip(wy_world, 0, 13.4)
+                        disp_x = int(wx_world / 6.1 * c_width)
+                        disp_y = int(c_height - (wy_world / 13.4 * c_height))
+                    else:
+                        # fallback: warp bottom of bbox
+                        point = np.array([[[cx, y2]]], dtype=np.float32)
+                        warped_c = cv2.perspectiveTransform(point, H)
+                        disp_x, disp_y = warped_c[0][0]
 
-                    # Clamp to court size
-                    wx_world = np.clip(wx_world, 0, 6.1)
-                    wy_world = np.clip(wy_world, 0, 13.4)
-
-                    # Map to top-down display
-                    disp_x = int(wx_world / 6.1 * c_width)
-                    disp_y = int(c_height - (wy_world / 13.4 * c_height))
-
-                    cv2.circle(warped_frame, (disp_x, disp_y), 5, (0,255,255), -1)
+                    cv2.circle(warped_frame, (int(disp_x), int(disp_y)), 5, (0,255,255), -1)
 
                     trajectory.append((cx, cy))
                     shown_trajectory.append((cx, cy))
 
                 else:
                     # Players: bottom of bbox → warp using homography
-                    point = np.array([[[cx, cy]]], dtype=np.float32)
+                    point = np.array([[[cx, y2]]], dtype=np.float32)
                     warped_c = cv2.perspectiveTransform(point, H)
                     wx, wy = warped_c[0][0]
                     colour = (0,0,255)  # player red
